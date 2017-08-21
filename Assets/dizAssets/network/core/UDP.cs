@@ -184,7 +184,7 @@ public class UDP : MonoBehaviour {
 		udpPacketIO.receivePacket = handler;
 	}
 	
-	public void SetReceiveDataQueueHandler(MessageReceivedHandler handler)
+	public void SetReceiveDataQueueHandler(MessageUdpReceivedHandler handler)
 	{
 		udpPacketIO.enableQueue = true;
 		udpPacketIO.MessageReceivedQueue = handler;

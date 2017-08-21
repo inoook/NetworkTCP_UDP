@@ -17,6 +17,7 @@ public class OscSender : MonoBehaviour {
         if (oscHandler != null)
         {            
             oscHandler.Cancel();
+			oscHandler = null;
         }
 
         // speed up finalization
@@ -65,8 +66,8 @@ public class OscSender : MonoBehaviour {
 	
 	void OnDisable()
     {
-        Debug.Log("closing OSC UDP socket in OnDisable");
-        oscHandler.Cancel();
-        oscHandler = null;
+//        Debug.Log("closing OSC UDP socket in OnDisable");
+//        oscHandler.Cancel();
+//        oscHandler = null;
     }
 }

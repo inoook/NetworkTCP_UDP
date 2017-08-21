@@ -223,17 +223,40 @@ using System;
 //      ReadThread.Start();
 	}
 
+	public void EnableQueue()
+	{
+		if (OscPacketIO == null) {
+			Debug.LogWarning ("need initReader");
+			return;
+		}
+		OscPacketIO.CreateReceiveQueue ();
+		OscPacketIO.MessageReceivedQueueBuffer = OscHandler;
+	}
+
 	public void initReader(UDPPacketIO oscPacketIO){
 		OscPacketIO = oscPacketIO;
 		
 		// Create the hashtable for the address lookup mechanism
 		AddressTable = new Hashtable();
 		
-		Debug.Log("initReader");
+		Debug.Log("initReader--");
 		ReadThread = new Thread(Read);
 		ReaderRunning = true;
 		ReadThread.IsBackground = true;      
 		ReadThread.Start();
+	}
+
+	void OscHandler(byte[] buffer)
+	{
+		ArrayList messages = Osc.PacketToOscMessages(buffer, buffer.Length);
+        foreach (OscMessage om in messages)
+        {
+            if (AllMessageHandler != null)
+                AllMessageHandler(om);
+            OscMessageHandler h = (OscMessageHandler)Hashtable.Synchronized(AddressTable)[om.Address];
+            if (h != null)
+                h(om);
+        }
 	}
 
 	
@@ -278,15 +301,17 @@ using System;
                 //Debug.Log("received packed of len=" + length);
                 if (length > 0)
                 {
-                    ArrayList messages = Osc.PacketToOscMessages(buffer, length);
-                    foreach (OscMessage om in messages)
-                    {
-                        if (AllMessageHandler != null)
-                            AllMessageHandler(om);
-                        OscMessageHandler h = (OscMessageHandler)Hashtable.Synchronized(AddressTable)[om.Address];
-                        if (h != null)
-                            h(om);
-                    }
+					if(!OscPacketIO.enableQueue){
+	                    ArrayList messages = Osc.PacketToOscMessages(buffer, length);
+	                    foreach (OscMessage om in messages)
+	                    {
+	                        if (AllMessageHandler != null)
+	                            AllMessageHandler(om);
+	                        OscMessageHandler h = (OscMessageHandler)Hashtable.Synchronized(AddressTable)[om.Address];
+	                        if (h != null)
+	                            h(om);
+	                    }
+					}
                 }
                 else
                     Thread.Sleep(20);

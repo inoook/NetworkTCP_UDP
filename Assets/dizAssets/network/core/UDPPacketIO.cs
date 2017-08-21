@@ -7,6 +7,10 @@ using System.Net.Sockets;
 using UnityEngine;
 using System.Text;
 
+
+public delegate void MessageUdpReceivedHandler(string message);
+public delegate void MessageBufferReceivedHandler(byte[] buffer);
+
 //http://www.sundh.com/blog/wp-content/uploads/2012/06/UDPPacketIO.cs
 // http://social.msdn.microsoft.com/Forums/en/netfxnetcom/thread/baa3a5bb-2154-445f-965d-8a139dbe932a
 
@@ -27,6 +31,7 @@ using System.Text;
 
 	public bool enableQueue = false;
 	private Queue messageQueue;
+	private Queue messageQueueBuffer;
 
     void Start() 
     {
@@ -59,6 +64,12 @@ using System.Text;
 			messageQueue = Queue.Synchronized(new Queue());
 		}
   	}
+
+	public void CreateReceiveQueue()
+	{
+		enableQueue = true;
+		messageQueueBuffer = Queue.Synchronized(new Queue());
+	}
   	
 
     ~UDPPacketIO()
@@ -150,6 +161,9 @@ using System.Text;
             receiver.Close();
 			if(messageQueue != null){
 				messageQueue = null;
+			}
+			if(messageQueueBuffer != null){
+				messageQueueBuffer = null;
 			}
 			Debug.Log("UDP receiver closed");
         }
@@ -246,33 +260,44 @@ using System.Text;
       IPEndPoint iep = new IPEndPoint(IPAddress.Any, localPort);
       byte[] incoming = receiver.Receive( ref iep );
       int count = Math.Min(buffer.Length, incoming.Length);
-	
-		if(receivePacket != null){
-			//Debug.Log("ReceivePacketEvent");
-			receivePacket(buffer);
-		}
-		
-		Encoding sjisEnc = Encoding.GetEncoding("utf-8");
-		string str = sjisEnc.GetString(incoming);
 
-		if(receiveData != null){
-			receiveData(str);
-		}
+		System.Array.Copy(incoming, buffer, count);
+		//
+		if (count > 0) {
+			if(receivePacket != null){
+				//Debug.Log("ReceivePacketEvent");
+				receivePacket(buffer);
+			}
+			
+			Encoding sjisEnc = Encoding.GetEncoding("utf-8");
+			string str = sjisEnc.GetString(incoming);
 
-		if(enableQueue){
-			// queueに追加
-			if(messageQueue != null){
-				messageQueue.Enqueue( str );
+			if(receiveData != null){
+				receiveData(str);
+			}
+
+			if(enableQueue){
+				// queueに追加
+				if(messageQueue != null){
+					messageQueue.Enqueue( str );
+				}
+			}
+			if (enableQueue) {
+				// queueに追加
+				if (messageQueueBuffer != null) {
+					messageQueueBuffer.Enqueue (buffer);
+				}
 			}
 		}
-		
-      System.Array.Copy(incoming, buffer, count);
+
+
       return count;
     }
 
 	//
 	// Queue
-	public MessageReceivedHandler MessageReceivedQueue;
+	public MessageUdpReceivedHandler MessageReceivedQueue;
+	public MessageBufferReceivedHandler MessageReceivedQueueBuffer;
 	void Update()
 	{
 		if(!enableQueue){ return; }
@@ -284,6 +309,18 @@ using System.Text;
 					if(this.MessageReceivedQueue != null){
 						string msg = messageQueue.Dequeue().ToString();
 						this.MessageReceivedQueue( msg );
+					}
+				}
+			}
+		}
+
+		if(messageQueueBuffer != null){
+			lock(messageQueueBuffer.SyncRoot){
+				if(messageQueueBuffer.Count > 0){
+
+					if(this.MessageReceivedQueueBuffer != null){
+						byte[] buffer = (byte[])(messageQueueBuffer.Dequeue());
+						this.MessageReceivedQueueBuffer( buffer );
 					}
 				}
 			}

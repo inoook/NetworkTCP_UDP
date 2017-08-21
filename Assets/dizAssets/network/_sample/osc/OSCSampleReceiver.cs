@@ -11,33 +11,41 @@ public class OSCSampleReceiver : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		oscReceiver.setup();
+
+		oscReceiver.EnableQueue ();// Queueを使って取得するとき。mainThreadでイベントを使用できるようになる。
 		
 		oscFunc = OscHandler;
-		oscReceiver.SetAddressHandler("/sp/1/rot/xyz", oscFunc);
-		oscReceiver.SetAddressHandler("/sp/1/trans/xyz", oscFunc);
+//		oscReceiver.SetAddressHandler("/sp/1/rot/xyz", oscFunc);
+//		oscReceiver.SetAddressHandler("/sp/1/trans/xyz", oscFunc);
+
+		oscReceiver.SetAddressHandler("/sp/1", oscFunc);
+		oscReceiver.SetAddressHandler("/sp/2", oscFunc);
 		
-		oscAllFunc = OscAllHandler;
-		oscReceiver.SetAllMessageHandler(oscAllFunc);
+//		oscAllFunc = OscAllHandler;
+//		oscReceiver.SetAllMessageHandler(oscAllFunc);
 	}
 	
 	public Vector3 rValue;
 	
 	void OscHandler(OscMessage oscM)
 	{
-		string str = Osc.OscMessageValueToString(oscM);
-		string[] strs = str.Split(","[0]);
+//		string str = Osc.OscMessageValueToString(oscM);
+//		string[] strs = str.Split(","[0]);
 		/*
 		for(int i = 0; i < strs.Length; i++){
 			Debug.Log(strs[i]);
 		}
 		*/
-		rValue.x = float.Parse(strs[0]);
-		rValue.y = float.Parse(strs[1]);
-		rValue.z = float.Parse(strs[2]);
-		
-		Debug.Log("OscHandler >>> " + oscM.getAddress() + " // " + oscM.getArgAsFloat(0) +", " + oscM.getArgAsFloat(1)  +", " + oscM.getArgAsFloat(2));
-		
+//		rValue.x = float.Parse(strs[0]);
+//		rValue.y = float.Parse(strs[1]);
+//		rValue.z = float.Parse(strs[2]);
+//		
+//		Debug.Log("OscHandler >>> " + oscM.getAddress() + " // " + oscM.getArgAsFloat(0) +", " + oscM.getArgAsFloat(1)  +", " + oscM.getArgAsFloat(2));
+//		
 		//Debug.Log(rValue);
+
+		float z = oscM.getArgAsFloat(0);
+		Debug.Log ("Recev: "+z);
 	}
 	
 	void OscAllHandler(OscMessage oscM)

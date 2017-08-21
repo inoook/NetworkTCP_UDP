@@ -54,6 +54,15 @@ public class OscReceiver : MonoBehaviour {
 //        oscHandler.init(udp);
         oscHandler.initReader(udp);
 	}
+
+	public void EnableQueue()
+	{
+		oscHandler = this.gameObject.GetComponent<Osc>();
+		if(oscHandler == null){
+			oscHandler = this.gameObject.AddComponent<Osc>();
+		}
+		oscHandler.EnableQueue ();
+	}
 	
 	public void SetAddressHandler(string key, OscMessageHandler ah)
 	{
